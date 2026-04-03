@@ -8,7 +8,7 @@ services:
       pip install -r requirements.txt
       python manage.py collectstatic --noinput
       python manage.py migrate
-      python manage.py create_admin
+      python manage.py create_admin || echo "Warning: Admin creation had issues, you may need to create manually"
     startCommand: gunicorn finance_backend.wsgi:application
     envVars:
       - key: DEBUG
