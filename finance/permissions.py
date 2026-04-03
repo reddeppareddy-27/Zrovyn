@@ -79,7 +79,9 @@ class CanCreateRecords(IsAnalystOrHigher):
 class CanUpdateRecords(IsAnalystOrHigher):
     """
     Permission to update financial records.
-    Only Analyst and Admin can update their own or any records (Admin).
+    - Analyst: Can update their own records only
+    - Admin: Can update any records
+    - Viewer: Cannot update (read-only)
     """
     message = 'You do not have permission to update this record.'
 
@@ -87,8 +89,10 @@ class CanUpdateRecords(IsAnalystOrHigher):
         """Check if user is analyst/admin and owner or admin."""
         if not super().has_permission(request, view):
             return False
-        if request.user.role.name == 'admin':
+        # Admin can update any record
+        if request.user.role and request.user.role.name == 'admin':
             return True
+        # Analyst can only update their own records
         return obj.user == request.user
 
 

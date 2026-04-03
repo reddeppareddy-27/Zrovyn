@@ -14,12 +14,14 @@ class FinancialSummaryService:
     @staticmethod
     def get_dashboard_summary(user):
         """
-        Get overall financial dashboard summary for a user.
+        Get overall financial dashboard summary.
+        All authenticated users see the same total (all records).
         
         Returns:
             dict: Contains total income, expenses, net balance, and record counts.
         """
-        records = FinancialRecord.objects.filter(user=user, is_deleted=False)
+        # All users see all records
+        records = FinancialRecord.objects.filter(is_deleted=False)
         
         income_sum = records.filter(record_type='income').aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
         expenses_sum = records.filter(record_type='expense').aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
@@ -43,12 +45,13 @@ class FinancialSummaryService:
     @staticmethod
     def get_category_summary(user):
         """
-        Get summary grouped by category.
+        Get summary grouped by category (all records).
         
         Returns:
             list: List of category summaries with totals and counts.
         """
-        records = FinancialRecord.objects.filter(user=user, is_deleted=False)
+        # All users see all records
+        records = FinancialRecord.objects.filter(is_deleted=False)
         
         category_summaries = records.values('category', 'record_type').annotate(
             total_amount=Sum('amount'),
@@ -80,16 +83,17 @@ class FinancialSummaryService:
     @staticmethod
     def get_monthly_summary(user, months=12):
         """
-        Get monthly summary for the past N months.
+        Get monthly summary for the past N months (all records).
         
         Args:
-            user: The user object
+            user: The user object (not used, shows all records)
             months: Number of months to calculate (default 12)
             
         Returns:
             list: List of monthly summaries.
         """
-        records = FinancialRecord.objects.filter(user=user, is_deleted=False)
+        # All users see all records
+        records = FinancialRecord.objects.filter(is_deleted=False)
         
         today = timezone.now().date()
         monthly_summaries = []
@@ -121,21 +125,23 @@ class FinancialSummaryService:
     @staticmethod
     def get_recent_activity(user, limit=10):
         """
-        Get recent financial records for the user.
+        Get recent financial records (all records).
         
         Args:
-            user: The user object
+            user: The user object (not used, shows all records)
             limit: Number of recent records to return
             
         Returns:
-            list: List of recent financial records.
+            list: List of recent financial records with user info.
         """
-        records = FinancialRecord.objects.filter(user=user, is_deleted=False)
+        # All users see all records
+        records = FinancialRecord.objects.filter(is_deleted=False)
         recent = records.order_by('-created_at')[:limit]
 
         return [
             {
                 'id': record.id,
+                'user': record.user.username,
                 'amount': record.amount,
                 'record_type': record.record_type,
                 'category': record.category,
@@ -149,18 +155,18 @@ class FinancialSummaryService:
     @staticmethod
     def get_record_statistics_for_period(user, start_date, end_date):
         """
-        Get statistics for a specific date range.
+        Get statistics for a specific date range (all records).
         
         Args:
-            user: The user object
+            user: The user object (not used, shows all records)
             start_date: Start date for the range
             end_date: End date for the range
             
         Returns:
             dict: Statistics for the period.
         """
+        # All users see all records
         records = FinancialRecord.objects.filter(
-            user=user,
             is_deleted=False,
             date__gte=start_date,
             date__lte=end_date

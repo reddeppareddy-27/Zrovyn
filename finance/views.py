@@ -116,13 +116,11 @@ class FinancialRecordViewSet(viewsets.ModelViewSet):
         """
         Return queries based on user role.
         - Admin: all records
-        - Analyst/Viewer: only their own records
+        - Analyst/Viewer: all records (they can view all, but can only edit their own)
         """
         user = self.request.user
-        if user.role and user.role.name == 'admin':
-            queryset = FinancialRecord.objects.filter(is_deleted=False)
-        else:
-            queryset = FinancialRecord.objects.filter(user=user, is_deleted=False)
+        # All authenticated users can view all records
+        queryset = FinancialRecord.objects.filter(is_deleted=False)
 
         # Filter by date range if provided
         start_date = self.request.query_params.get('start_date')
