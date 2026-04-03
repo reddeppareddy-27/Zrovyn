@@ -182,47 +182,357 @@ Server will run at: `http://localhost:8000`
 
 ---
 
-## 🔌 API Endpoints
+## 🔌 Complete API Endpoints Reference
 
-### Authentication
+### Base URL
+```
+https://zrovyn-finance-backend.onrender.com/api/v1/
+```
+
+### 🔐 Authentication
+
+#### Get Authentication Token
 ```
 POST /api/v1/api-token-auth/
-  Body: {"username": "reddy", "password": "analyst123"}
-  Returns: {"token": "your-token-here"}
+
+Body:
+{
+  "username": "reddy",
+  "password": "analyst123"
+}
+
+Response:
+{
+  "token": "your-unique-token-here"
+}
+
+Usage: Include in all requests as: Authorization: Token <token>
 ```
 
-### Financial Records
+---
+
+### 👥 User Management Endpoints
+
+#### List All Users (Admin Only)
 ```
-GET    /api/v1/records/                    - List all records
-POST   /api/v1/records/                    - Create new record
-GET    /api/v1/records/{id}/               - Get record details
-PATCH  /api/v1/records/{id}/               - Update record
-DELETE /api/v1/records/{id}/               - Delete record
-POST   /api/v1/records/bulk_create/        - Create multiple records
+GET /api/v1/users/
+
+Headers: Authorization: Token <admin-token>
+Response: List of all users with details
 ```
 
-### Analytics
+#### Create New User (Admin Only)
 ```
-GET /api/v1/records/summary/               - Overall summary
-GET /api/v1/records/category_summary/      - Category breakdown
-GET /api/v1/records/monthly_summary/       - Monthly trends
-GET /api/v1/records/recent_activity/       - Recent transactions
-GET /api/v1/records/statistics/            - Date range statistics
+POST /api/v1/users/
+
+Headers: Authorization: Token <admin-token>
+Body:
+{
+  "username": "newuser",
+  "email": "user@example.com",
+  "password": "SecurePassword123!",
+  "password2": "SecurePassword123!",
+  "first_name": "First",
+  "last_name": "Last",
+  "role": 1,
+  "status": "active"
+}
 ```
 
-### Users
+#### Get User Details
 ```
-GET    /api/v1/users/                      - List users (admin only)
-POST   /api/v1/users/                      - Create user (admin only)
-GET    /api/v1/users/{id}/                 - Get user details
-GET    /api/v1/users/me/                   - Current user profile
-PATCH  /api/v1/users/{id}/                 - Update user
-DELETE /api/v1/users/{id}/                 - Delete user (admin only)
+GET /api/v1/users/{user-id}/
+
+Headers: Authorization: Token <token>
+Response: User details including role and status
 ```
 
-### Roles
+#### Get Current User Profile
 ```
-GET /api/v1/roles/                         - List all roles
+GET /api/v1/users/me/
+
+Headers: Authorization: Token <token>
+Response: Current authenticated user's profile
+```
+
+#### Update User (Admin Only)
+```
+PATCH /api/v1/users/{user-id}/
+
+Headers: Authorization: Token <admin-token>
+Body:
+{
+  "email": "newemail@example.com",
+  "first_name": "Updated",
+  "role": 2,
+  "status": "active"
+}
+```
+
+#### Delete User (Admin Only)
+```
+DELETE /api/v1/users/{user-id}/
+
+Headers: Authorization: Token <admin-token>
+Response: 204 No Content (soft delete)
+```
+
+---
+
+### 👤 Roles Endpoints
+
+#### List All Roles
+```
+GET /api/v1/roles/
+
+Headers: Authorization: Token <token>
+Response: [
+  {
+    "name": "viewer",
+    "description": "Read-only access"
+  },
+  {
+    "name": "analyst",
+    "description": "Can view and analyze"
+  },
+  {
+    "name": "admin",
+    "description": "Full access"
+  }
+]
+```
+
+---
+
+### 💰 Financial Records Endpoints
+
+#### List All Records
+```
+GET /api/v1/records/
+
+Headers: Authorization: Token <token>
+Query Parameters:
+  - start_date=YYYY-MM-DD (filter from date)
+  - end_date=YYYY-MM-DD (filter to date)
+  - type=income|expense (filter by type)
+  - category=salary|food|transport|... (filter by category)
+  - search=text (search in description)
+  - page=1 (page number)
+  - page_size=20 (items per page)
+
+Example:
+GET /api/v1/records/?type=income&start_date=2024-01-01&end_date=2024-12-31
+```
+
+#### Get Specific Record by ID
+```
+GET /api/v1/records/{record-id}/
+
+Headers: Authorization: Token <token>
+Response: Single record with all details
+```
+
+#### Create New Record
+```
+POST /api/v1/records/
+
+Headers: Authorization: Token <token>
+        Content-Type: application/json
+
+Body:
+{
+  "amount": "5000.00",
+  "record_type": "income",
+  "category": "salary",
+  "date": "2024-01-15",
+  "description": "Monthly salary"
+}
+
+Valid Categories: salary, bonus, investment, food, transport, utilities, 
+                  entertainment, healthcare, education, other
+```
+
+#### Update Record by ID (Own Records Only)
+```
+PATCH /api/v1/records/{record-id}/
+
+Headers: Authorization: Token <token>
+        Content-Type: application/json
+
+Body:
+{
+  "amount": "5500.00",
+  "description": "Updated salary amount",
+  "date": "2024-01-15"
+}
+
+Note: Only record owner or admin can update
+```
+
+#### Full Update Record by ID
+```
+PUT /api/v1/records/{record-id}/
+
+Headers: Authorization: Token <token>
+        Content-Type: application/json
+
+Body: (All fields required)
+{
+  "amount": "5500.00",
+  "record_type": "income",
+  "category": "salary",
+  "date": "2024-01-15",
+  "description": "Updated description"
+}
+```
+
+#### Delete Record by ID
+```
+DELETE /api/v1/records/{record-id}/
+
+Headers: Authorization: Token <token>
+Response: 204 No Content (soft delete)
+
+Note: Only admin can delete
+```
+
+#### Create Multiple Records (Bulk)
+```
+POST /api/v1/records/bulk_create/
+
+Headers: Authorization: Token <token>
+        Content-Type: application/json
+
+Body:
+{
+  "records": [
+    {
+      "amount": "5000.00",
+      "record_type": "income",
+      "category": "salary",
+      "date": "2024-01-15",
+      "description": "Salary"
+    },
+    {
+      "amount": "100.00",
+      "record_type": "expense",
+      "category": "food",
+      "date": "2024-01-16",
+      "description": "Lunch"
+    }
+  ]
+}
+```
+
+---
+
+### 📊 Analytics & Dashboard Endpoints
+
+#### Get Overall Summary
+```
+GET /api/v1/records/summary/
+
+Headers: Authorization: Token <token>
+Response:
+{
+  "total_income": 50000.00,
+  "total_expenses": 15000.00,
+  "net_balance": 35000.00,
+  "total_records": 42,
+  "records_count_by_type": {"income": 25, "expense": 17},
+  "records_count_by_category": {...}
+}
+```
+
+#### Get Category Breakdown
+```
+GET /api/v1/records/category_summary/
+
+Headers: Authorization: Token <token>
+Response: List of categories with totals and counts
+```
+
+#### Get Monthly Trends
+```
+GET /api/v1/records/monthly_summary/
+
+Headers: Authorization: Token <token>
+Query Parameters:
+  - months=12 (number of months)
+
+Response: Monthly income, expenses, and net for last 12 months
+```
+
+#### Get Recent Activity
+```
+GET /api/v1/records/recent_activity/
+
+Headers: Authorization: Token <token>
+Query Parameters:
+  - limit=10 (number of records)
+
+Response: Latest transactions with user info
+```
+
+#### Get Statistics for Date Range
+```
+GET /api/v1/records/statistics/?start_date=2024-01-01&end_date=2024-12-31
+
+Headers: Authorization: Token <token>
+Query Parameters: (Required)
+  - start_date=YYYY-MM-DD
+  - end_date=YYYY-MM-DD
+
+Response: Statistics including totals, counts, averages for period
+```
+
+---
+
+### 🎛️ Admin Panel
+
+#### Django Admin Interface
+```
+URL: https://zrovyn-finance-backend.onrender.com/admin/
+
+Login Credentials:
+- Username: admin
+- Password: admin123
+
+Access: Full management of users, roles, and records
+```
+
+---
+
+### 📋 Common Query Examples
+
+#### Get Income Records from January 2024
+```
+GET /api/v1/records/?type=income&start_date=2024-01-01&end_date=2024-01-31
+```
+
+#### Get Food Expenses
+```
+GET /api/v1/records/?type=expense&category=food
+```
+
+#### Search for "bonus" in descriptions
+```
+GET /api/v1/records/?search=bonus
+```
+
+#### Get page 2 with 50 items per page
+```
+GET /api/v1/records/?page=2&page_size=50
+```
+
+#### Get statistics for Q1 2024
+```
+GET /api/v1/records/statistics/?start_date=2024-01-01&end_date=2024-03-31
+```
+
+#### Get last 3 months trends
+```
+GET /api/v1/records/monthly_summary/?months=3
 ```
 
 ---
