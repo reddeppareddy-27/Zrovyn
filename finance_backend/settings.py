@@ -117,11 +117,14 @@ CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:
 CORS_ALLOW_CREDENTIALS = True
 
 # Logging Configuration (file logging only in development)
+# Create logs directory if it doesn't exist and we're using file logging
 if DEBUG:
+    logs_dir = BASE_DIR / 'logs'
+    logs_dir.mkdir(exist_ok=True)
     LOG_HANDLERS = ['console', 'file']
     FILE_HANDLER = {
         'class': 'logging.FileHandler',
-        'filename': BASE_DIR / 'logs' / 'debug.log',
+        'filename': logs_dir / 'debug.log',
         'formatter': 'verbose',
     }
 else:
